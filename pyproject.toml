@@ -1,0 +1,10 @@
+[project]
+name = "reachy-mini-countdown"
+version = "0.1.0"
+description = "A Reachy Mini countdown app with a celebration at zero."
+requires-python = ">=3.10,<3.13"
+dependencies = ["reachy-mini", "flask", "yt-dlp", "pydub"]
+
+[tool.uv]
+package = false
+
