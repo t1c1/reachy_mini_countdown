@@ -998,6 +998,10 @@ def _start_camera_ui(
             <img id="camera" src="/video_feed" alt="Camera Feed" 
                  onerror="this.style.display='none'; document.getElementById('camera-error').style.display='block';"
                  onload="this.style.display='block'; document.getElementById('camera-error').style.display='none';">
+            <div class="camera-overlay">
+                <div class="countdown-display" id="countdown">--:--:--</div>
+                <div class="status" id="status">Initializing...</div>
+            </div>
             <div id="camera-error" class="camera-error" style="display:none;">
                 <p>⚠️ Camera feed not available</p>
                 <p style="font-size:0.8em; margin-top:10px;">Make sure the robot camera is connected and permissions are granted.</p>
@@ -1006,9 +1010,19 @@ def _start_camera_ui(
         """
         cam_status = "Active"
     else:
-        # Hide camera section entirely
-        camera_block = ""
-        cam_status = "Hidden"
+        camera_block = """
+        <div class="camera-container">
+            <div class="camera-overlay">
+                <div class="countdown-display" id="countdown">--:--:--</div>
+                <div class="status" id="status">Initializing...</div>
+            </div>
+            <div class="camera-error" style="display:block;">
+                <p>Camera disabled</p>
+                <p style="font-size:0.8em; margin-top:10px;">Running without camera stream.</p>
+            </div>
+        </div>
+        """
+        cam_status = "Disabled"
     
     # Inject emoji, music URL, and camera blocks into template
     yt_value = control_state.get('youtube_url') or youtube_url or ""
