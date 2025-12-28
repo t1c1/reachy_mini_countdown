@@ -1,120 +1,102 @@
-## Reachy Mini Countdown
+# 🎉 Reachy Mini Countdown
 
-This repo contains a simple countdown app for Reachy Mini.
+A fun countdown app for New Year's Eve or any celebration! Watch Reachy Mini count down, dance, and celebrate when the timer hits zero.
 
-### Step by step (matches the official SDK docs)
+**[Install from Hugging Face](https://huggingface.co/spaces/t1c1/reachy_mini_countdown)** | **[View on GitHub](https://github.com/t1c1/reachy_mini_countdown)**
 
-Reference docs: `https://github.com/pollen-robotics/reachy_mini/tree/main/docs/SDK`
+## Features
 
-1. Install `uv` (the SDK docs recommend it).
+- ⏱️ **Countdown Timer**: Set any duration (5 to 3600 seconds)
+- 💃 **Celebration Dance**: Intense head bobs and antenna flips at zero
+- 🎵 **Custom Music**: Set any YouTube URL for the celebration
+- 🗣️ **Voice Countdown**: Speaks the final 10 seconds (macOS)
+- 🌐 **Web UI**: Control everything from your browser at port 8042
 
-2. Install Python 3.12 via `uv`:
+## Quick Install
 
+**From the Reachy Mini Dashboard:**
+1. Go to http://localhost:8000
+2. Find "Reachy Mini Countdown" in the app list
+3. Click Install
+4. Toggle it ON
+5. Click ⚙️ to open controls
+
+**Or install manually:**
 ```bash
-uv python install 3.12 --default
+pip install git+https://huggingface.co/spaces/t1c1/reachy_mini_countdown
 ```
-
-3. Create and activate a virtual environment:
-
-```bash
-uv venv reachy_mini_env --python 3.12
-source reachy_mini_env/bin/activate
-```
-
-4. Install dependencies for this project:
-
-```bash
-uv sync
-```
-
-5. Ensure the daemon is running.
-
-For Reachy Mini Wireless: the daemon runs on the robot when powered on. Ensure your computer and Reachy Mini are on the same network.
-
-For Reachy Mini Lite (USB): run:
-
-```bash
-uv run reachy-mini-daemon
-```
-
-For simulation:
-
-```bash
-uv run reachy-mini-daemon --sim
-```
-
-6. Verify the dashboard is reachable:
-
-Open `http://localhost:8000` in your browser.
-
-7. Run the countdown.
-
-If you are using Reachy Mini Wireless and running on your computer:
-
-```bash
-python main.py --wireless
-```
-
-If you are running locally on the same machine as the daemon:
-
-```bash
-python main.py
-```
-
-8. Open the Web UI in your browser:
-
-```
-http://localhost:5001
-```
-
-The web UI shows:
-- **Live camera feed** from Reachy Mini
-- **Countdown timer** (updates every second)
-- **Status messages** that change as countdown progresses
-
-### Quick Test Mode
-
-Test with a short countdown (no need to wait until midnight):
-
-```bash
-python main.py --test-seconds 30 --once
-```
-
-Then open `http://localhost:5001` to see the camera and countdown!
-
-### Custom Address and Port
-
-Use a different port or host:
-
-```bash
-# Use port 8080
-python main.py --port 8080
-
-# Use localhost only (127.0.0.1)
-python main.py --host 127.0.0.1 --port 5001
-
-# Use a specific IP address
-python main.py --host 192.168.1.100 --port 5001
-```
-
-### Video Recording
-
-Record the countdown and celebration as a video file:
-
-```bash
-# Record with default filename (countdown_YYYYMMDD_HHMMSS.mp4)
-python main.py --record
-
-# Record with custom filename
-python main.py --record --video-output my_countdown.mp4
-
-# Test with recording
-python main.py --test-seconds 30 --once --record
-```
-
-Videos are saved in the current directory as MP4 files at 30 FPS.
 
 ## How It Works
 
-See [HOW_IT_WORKS.md](HOW_IT_WORKS.md) for a detailed explanation of the architecture, threading model, and how all the pieces fit together.
+1. **Waiting**: Gentle antenna metronome sway
+2. **Final Minute**: Antennas rise, head tilts up, alternating antenna flips
+3. **Final 10 Seconds**: Big antenna flips, head bobs, spoken countdown
+4. **Celebration**: Full dance routine with your chosen music!
 
+## Web UI Controls
+
+Open http://localhost:8042 when the app is running:
+
+- **▶️ Start**: Begin countdown with default 30 seconds
+- **⏹️ Stop**: Pause the countdown
+- **🔄 Reset**: Clear and return to ready state
+- **Custom Duration**: Enter seconds and click Start Custom
+- **🎵 Save Music**: Set a YouTube URL for celebration
+
+## Development Setup
+
+If you want to modify the app locally:
+
+```bash
+# Clone the repo
+git clone https://github.com/t1c1/reachy_mini_countdown
+cd reachy_mini_countdown
+
+# Install uv (recommended)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create virtual environment
+uv venv .venv --python 3.12
+source .venv/bin/activate
+
+# Install dependencies
+uv sync
+
+# Run the daemon (for USB Reachy Mini or simulation)
+uv run reachy-mini-daemon        # USB
+uv run reachy-mini-daemon --sim  # Simulation
+
+# Install the app in dev mode
+pip install -e /path/to/my_reachy_apps/reachy_mini_countdown
+```
+
+## Project Structure
+
+```
+reachy_mini_countdown/
+├── reachy_mini_countdown/
+│   ├── __init__.py
+│   ├── main.py              # Main app logic
+│   └── static/
+│       ├── index.html       # Settings UI
+│       ├── main.js          # UI JavaScript
+│       └── style.css        # UI Styles
+├── index.html               # HF Space landing page
+├── style.css                # HF Space styles
+├── README.md
+└── pyproject.toml
+```
+
+## Links
+
+- **Hugging Face Space**: https://huggingface.co/spaces/t1c1/reachy_mini_countdown
+- **GitHub**: https://github.com/t1c1/reachy_mini_countdown
+- **Reachy Mini SDK**: https://github.com/pollen-robotics/reachy_mini
+
+## Author
+
+Created by [t1c1](https://huggingface.co/t1c1)
+
+## License
+
+MIT
