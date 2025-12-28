@@ -190,27 +190,38 @@ class ReachyMiniCountdown(ReachyMiniApp):
     def _final_minute(self, reachy: ReachyMini, seconds_remaining: int):
         """Antennas rise during final 60 seconds."""
         progress = 1 - (seconds_remaining / 60)  # 0.0 → 1.0
-        antenna_pos = -0.4 + (progress * 0.8)    # -0.4 to 0.4 radians
+        antenna_pos = -0.6 + (progress * 1.2)    # -0.6 to 0.6 radians (more lift)
         
-        reachy.goto_target(antennas=[antenna_pos, antenna_pos], duration=0.5)
+        reachy.goto_target(antennas=[antenna_pos, antenna_pos], duration=0.4)
         
         # Head tilts up, starting from -30 degrees
-        pitch = -30 - (progress * 15)  # -30 to -45 degrees
+        pitch = -30 - (progress * 20)  # -30 to -50 degrees (more tilt)
         head = create_head_pose(pitch=pitch, degrees=True)
-        reachy.goto_target(head=head, duration=0.5)
+        reachy.goto_target(head=head, duration=0.4)
+        
+        # Quick antenna flip every 10 seconds to add excitement
+        if seconds_remaining % 10 == 0:
+            reachy.goto_target(antennas=[0.8, -0.8], duration=0.25)
+            reachy.goto_target(antennas=[-0.8, 0.8], duration=0.25)
+            reachy.goto_target(antennas=[antenna_pos, antenna_pos], duration=0.25)
         
         print(f"⏱️ {seconds_remaining}s...")
 
     def _final_ten(self, reachy: ReachyMini, seconds_remaining: int):
         """Countdown with head bobs for final 10 seconds."""
         # Antennas fully up
-        reachy.goto_target(antennas=[0.5, 0.5], duration=0.2)
+        reachy.goto_target(antennas=[0.75, 0.75], duration=0.18)
         
         # Head bob (keep head up, no downward movement)
-        head_mid = create_head_pose(pitch=-35, degrees=True)
-        head_up = create_head_pose(pitch=-45, degrees=True)
-        reachy.goto_target(head=head_mid, duration=0.2)
-        reachy.goto_target(head=head_up, duration=0.2)
+        head_mid = create_head_pose(pitch=-38, degrees=True)
+        head_up = create_head_pose(pitch=-50, degrees=True)
+        reachy.goto_target(head=head_mid, duration=0.18)
+        reachy.goto_target(head=head_up, duration=0.18)
+        
+        # Antenna flip burst
+        reachy.goto_target(antennas=[0.9, -0.9], duration=0.18)
+        reachy.goto_target(antennas=[-0.9, 0.9], duration=0.18)
+        reachy.goto_target(antennas=[0.75, 0.75], duration=0.18)
         
         # Print and speak countdown number (10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
         if seconds_remaining > 0:
