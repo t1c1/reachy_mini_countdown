@@ -685,6 +685,7 @@ def _start_camera_ui(
                 max-width: 900px;
                 width: 100%;
                 margin: 0 auto;
+                position: relative;
             }
             #camera {
                 width: 100%;
@@ -696,6 +697,27 @@ def _start_camera_ui(
                 background: #000;
                 min-height: 420px;
                 object-fit: contain;
+            }
+            .camera-overlay {
+                position: absolute;
+                top: 12px;
+                left: 12px;
+                background: rgba(0, 0, 0, 0.55);
+                color: #fff;
+                padding: 10px 12px;
+                border-radius: 10px;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+            }
+            .camera-overlay .countdown-display {
+                color: #f5a524;
+                margin: 0;
+            }
+            .camera-overlay .status {
+                margin: 0;
+                color: #c9ddff;
             }
             .camera-error {
                 background: #f7f8fb;
@@ -802,8 +824,6 @@ def _start_camera_ui(
             <div class="logo-container">
                 <h1>Reachy Mini Countdown</h1>
             </div>
-            <div class="countdown-display" id="countdown">--:--:--</div>
-            <div class="status" id="status">Initializing...</div>
         </div>
         __CAMERA_BLOCK__
         <div class="info">
@@ -834,9 +854,6 @@ def _start_camera_ui(
                     <button class="btn-reset" onclick="setYoutube()">Save Music</button>
                 </div>
             </div>
-            <p style="text-align: center; margin-top: 15px; font-size: 0.75em; color: #888; opacity: 0.6;">
-                🥚 Try the Konami code: ↑↑↓↓←→←→BA
-            </p>
         </div>
         
         <script>
@@ -989,15 +1006,9 @@ def _start_camera_ui(
         """
         cam_status = "Active"
     else:
-        camera_block = """
-        <div class="camera-container">
-            <div class="camera-error" style="display:block;">
-                <p>Camera disabled</p>
-                <p style="font-size:0.8em; margin-top:10px;">Running without camera stream.</p>
-            </div>
-        </div>
-        """
-        cam_status = "Disabled"
+        # Hide camera section entirely
+        camera_block = ""
+        cam_status = "Hidden"
     
     # Inject emoji, music URL, and camera blocks into template
     yt_value = control_state.get('youtube_url') or youtube_url or ""
