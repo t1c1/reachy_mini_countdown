@@ -252,16 +252,16 @@ class ReachyMiniCountdown(ReachyMiniApp):
                     aiff_file = os.path.join(temp_dir, f'countdown_{number}.aiff')
                     wav_file = os.path.join(temp_dir, f'countdown_{number}.wav')
                     
-                    # Generate AIFF with say (16kHz for robot)
+                    # Generate AIFF with say (default format)
                     subprocess.run(
-                        ['say', '-o', aiff_file, '--data-format=LEI16@16000', str(number)],
+                        ['say', '-o', aiff_file, str(number)],
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
                         timeout=5
                     )
                     
                     if os.path.exists(aiff_file):
-                        # Convert to WAV
+                        # Convert to WAV (16kHz for robot)
                         subprocess.run(
                             ['afconvert', '-f', 'WAVE', '-d', 'LEI16@16000', aiff_file, wav_file],
                             stdout=subprocess.DEVNULL,
