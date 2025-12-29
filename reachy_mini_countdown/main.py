@@ -207,7 +207,7 @@ class ReachyMiniCountdown(ReachyMiniApp):
             # Speak interval if enabled
             control_state = getattr(self, '_control_state', None)
             if control_state and control_state.get('speak_intervals', False):
-                self._speak_countdown(seconds_remaining)
+                self._speak_countdown(seconds_remaining, reachy)
         
         print(f"⏱️ {seconds_remaining}s...")
 
@@ -230,20 +230,70 @@ class ReachyMiniCountdown(ReachyMiniApp):
         # Print and speak countdown number (10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
         if seconds_remaining > 0:
             print(f"🔥 {seconds_remaining}...")
-            self._speak_countdown(seconds_remaining)
+            self._speak_countdown(seconds_remaining, reachy)
         else:
             print("🎉 ZERO! 🎉")
 
-    def _speak_countdown(self, number: int):
-        """Speak the countdown number using system text-to-speech."""
+    def _speak_countdown(self, number: int, reachy: ReachyMini | None = None):
+        """Speak the countdown number - tries robot speaker first, falls back to system."""
+        import tempfile
+        
+        try:
+            # Try to generate audio file and play on robot
+            if reachy is not None and hasattr(reachy, 'media') and hasattr(reachy.media, 'audio'):
+                temp_dir = tempfile.gettempdir()
+                audio_file = os.path.join(temp_dir, f'countdown_{number}.aiff')
+                
+                # Generate TTS audio file
+                generated = False
+                if sys.platform == 'darwin':
+                    # macOS - use 'say' with output file
+                    result = subprocess.run(
+                        ['say', '-o', audio_file, str(number)],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        timeout=5
+                    )
+                    generated = result.returncode == 0 and os.path.exists(audio_file)
+                elif sys.platform.startswith('linux'):
+                    # Linux - try espeak with WAV output
+                    wav_file = os.path.join(temp_dir, f'countdown_{number}.wav')
+                    try:
+                        result = subprocess.run(
+                            ['espeak', '-w', wav_file, str(number)],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                            timeout=5
+                        )
+                        if result.returncode == 0 and os.path.exists(wav_file):
+                            audio_file = wav_file
+                            generated = True
+                    except FileNotFoundError:
+                        pass
+                
+                # Play on robot speaker
+                if generated and os.path.exists(audio_file):
+                    try:
+                        reachy.media.audio.play_sound(audio_file)
+                        return  # Success - don't fall back
+                    except Exception as e:
+                        print(f"⚠️  Robot speaker failed: {e}")
+            
+            # Fallback to system speaker
+            self._speak_countdown_local(number)
+            
+        except Exception:
+            # Last resort fallback
+            self._speak_countdown_local(number)
+    
+    def _speak_countdown_local(self, number: int):
+        """Fallback: speak using local system TTS."""
         try:
             if sys.platform == 'darwin':
-                # macOS - use 'say' command
                 subprocess.Popen(['say', str(number)], 
                                stdout=subprocess.DEVNULL, 
                                stderr=subprocess.DEVNULL)
             elif sys.platform.startswith('linux'):
-                # Linux - try espeak or festival
                 for tts in ['espeak', 'festival']:
                     try:
                         if tts == 'espeak':
@@ -259,13 +309,11 @@ class ReachyMiniCountdown(ReachyMiniApp):
                     except FileNotFoundError:
                         continue
             else:
-                # Windows - use SAPI or PowerShell
                 try:
                     import win32com.client
                     speaker = win32com.client.Dispatch("SAPI.SpVoice")
                     speaker.Speak(str(number))
                 except ImportError:
-                    # Fallback to PowerShell
                     subprocess.Popen(['powershell', '-Command', 
                                     f'Add-Type -AssemblyName System.Speech; '
                                     f'$speak = New-Object System.Speech.Synthesis.SpeechSynthesizer; '
@@ -273,7 +321,6 @@ class ReachyMiniCountdown(ReachyMiniApp):
                                    stdout=subprocess.DEVNULL,
                                    stderr=subprocess.DEVNULL)
         except Exception:
-            # Silently fail if TTS is not available
             pass
 
     def _stop_audio_playback(self, reachy: ReachyMini, audio_stop_event: threading.Event | None = None) -> None:
@@ -328,11 +375,11 @@ class ReachyMiniCountdown(ReachyMiniApp):
                 if os.path.exists(audio_file):
                     # Try to play on the robot speaker first
                     try:
-                        if hasattr(reachy.media, "play_sound"):
-                            reachy.media.play_sound(audio_file)
+                        if hasattr(reachy.media, "audio") and hasattr(reachy.media.audio, "play_sound"):
+                            reachy.media.audio.play_sound(audio_file)
                             print("🎵 Playing YouTube audio on Reachy Mini speaker...")
                         else:
-                            raise AttributeError("media.play_sound not available")
+                            raise AttributeError("media.audio.play_sound not available")
                     except Exception as play_err:
                         print(f"⚠️  Could not play on robot speaker ({play_err}), playing locally")
                         # Fallback: play locally using system player
