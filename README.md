@@ -5,6 +5,7 @@ colorFrom: yellow
 colorTo: red
 sdk: static
 pinned: false
+short_description: Countdown timer with celebration dance!
 tags:
   - reachy_mini
   - reachy_mini_python_app
