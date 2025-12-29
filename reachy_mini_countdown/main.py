@@ -219,16 +219,6 @@ class ReachyMiniCountdown(ReachyMiniApp):
 
     def _final_ten(self, reachy: ReachyMini, seconds_remaining: int):
         """Countdown with antenna flip for each second."""
-        # Alternate antenna direction each second
-        if seconds_remaining % 2 == 0:
-            reachy.goto_target(antennas=[0.8, -0.8], duration=0.15)
-        else:
-            reachy.goto_target(antennas=[-0.8, 0.8], duration=0.15)
-        
-        # Quick head nod
-        head = create_head_pose(pitch=-45, degrees=True)
-        reachy.goto_target(head=head, duration=0.15)
-        
         # Print and speak countdown number
         if seconds_remaining > 0:
             print(f"🔥 {seconds_remaining}...")
@@ -238,8 +228,24 @@ class ReachyMiniCountdown(ReachyMiniApp):
                 args=(seconds_remaining, reachy),
                 daemon=True
             ).start()
+            # Antenna flip in background (non-blocking)
+            threading.Thread(
+                target=self._antenna_flip,
+                args=(reachy, seconds_remaining),
+                daemon=True
+            ).start()
         else:
             print("🎉 ZERO! 🎉")
+    
+    def _antenna_flip(self, reachy: ReachyMini, seconds_remaining: int):
+        """Quick antenna flip - runs in background."""
+        try:
+            if seconds_remaining % 2 == 0:
+                reachy.goto_target(antennas=[0.7, -0.7], duration=0.2)
+            else:
+                reachy.goto_target(antennas=[-0.7, 0.7], duration=0.2)
+        except Exception:
+            pass  # Ignore errors in background thread
 
     def _pre_generate_countdown_audio(self):
         """Pre-generate audio files for countdown numbers 1-60 at startup."""
