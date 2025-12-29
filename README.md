@@ -1,3 +1,15 @@
+---
+title: Reachy Mini Countdown
+emoji: 🎉
+colorFrom: yellow
+colorTo: orange
+sdk: static
+pinned: false
+tags:
+  - reachy_mini
+  - reachy_mini_python_app
+---
+
 # 🎉 Reachy Mini Countdown
 
 A fun countdown app for New Year's Eve or any celebration! Watch Reachy Mini count down, dance, and celebrate when the timer hits zero.
@@ -10,7 +22,7 @@ A fun countdown app for New Year's Eve or any celebration! Watch Reachy Mini cou
 - 💃 **Celebration Dance**: Intense head bobs and antenna flips at zero
 - 🎵 **Custom Music**: Set any YouTube URL for the celebration
 - 🗣️ **Voice Countdown**: Speaks the final 10 seconds (macOS)
-- 🌐 **Web UI**: Control everything from your browser at port 8042
+- 🌐 **Web UI**: Control everything from your browser
 
 ## Quick Install
 
@@ -35,7 +47,7 @@ pip install git+https://huggingface.co/spaces/t1c1/reachy_mini_countdown
 
 ## Web UI Controls
 
-Open http://localhost:8042 when the app is running:
+Open http://localhost:5001 when the app is running:
 
 - **▶️ Start**: Begin countdown with default 30 seconds
 - **⏹️ Stop**: Pause the countdown
@@ -76,11 +88,7 @@ pip install -e /path/to/my_reachy_apps/reachy_mini_countdown
 reachy_mini_countdown/
 ├── reachy_mini_countdown/
 │   ├── __init__.py
-│   ├── main.py              # Main app logic
-│   └── static/
-│       ├── index.html       # Settings UI
-│       ├── main.js          # UI JavaScript
-│       └── style.css        # UI Styles
+│   └── main.py              # App logic + embedded web UI
 ├── index.html               # HF Space landing page
 ├── style.css                # HF Space styles
 ├── README.md

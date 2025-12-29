@@ -200,10 +200,14 @@ class ReachyMiniCountdown(ReachyMiniApp):
         reachy.goto_target(head=head, duration=0.4)
         
         # Quick antenna flip every 10 seconds to add excitement
-        if seconds_remaining % 10 == 0:
+        if seconds_remaining % 10 == 0 and seconds_remaining > 0:
             reachy.goto_target(antennas=[0.8, -0.8], duration=0.25)
             reachy.goto_target(antennas=[-0.8, 0.8], duration=0.25)
             reachy.goto_target(antennas=[antenna_pos, antenna_pos], duration=0.25)
+            # Speak interval if enabled
+            control_state = getattr(self, '_control_state', None)
+            if control_state and control_state.get('speak_intervals', False):
+                self._speak_countdown(seconds_remaining)
         
         print(f"⏱️ {seconds_remaining}s...")
 
@@ -581,6 +585,11 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Disable camera (useful for headless simulation mode)",
     )
+    parser.add_argument(
+        "--speak-intervals",
+        action="store_true",
+        help="Speak at every 10 second interval (60, 50, 40, 30, 20, 10)",
+    )
     return parser.parse_args()
 
 
@@ -854,6 +863,10 @@ def _start_camera_ui(
                     <button class="btn-reset" onclick="setYoutube()">Save Music</button>
                 </div>
             </div>
+            <div class="input-group">
+                <input type="checkbox" id="speak-intervals" __SPEAK_INTERVALS_CHECKED__ onchange="toggleSpeakIntervals()">
+                <label for="speak-intervals">Speak at 10-second intervals (60, 50, 40...)</label>
+            </div>
         </div>
         
         <script>
@@ -965,6 +978,15 @@ def _start_camera_ui(
                 .catch(() => alert('Network error while updating music'));
             }
             
+            function toggleSpeakIntervals() {
+                const checked = document.getElementById('speak-intervals').checked;
+                fetch('/control/speak-intervals', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({enabled: checked})
+                });
+            }
+            
             // 🥚 Easter egg: Konami code detection
             let konamiCode = [];
             const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 
@@ -1026,6 +1048,7 @@ def _start_camera_ui(
     
     # Inject emoji, music URL, and camera blocks into template
     yt_value = control_state.get('youtube_url') or youtube_url or ""
+    speak_checked = "checked" if control_state.get('speak_intervals', False) else ""
     templ = (
         HTML_TEMPLATE
         .replace("__EMOJI__", emoji)
@@ -1033,6 +1056,7 @@ def _start_camera_ui(
         .replace("__YT_URL__", yt_value)
         .replace("__CAMERA_BLOCK__", camera_block)
         .replace("__CAM_STATUS__", cam_status)
+        .replace("__SPEAK_INTERVALS_CHECKED__", speak_checked)
     )
     
     @app.route('/')
@@ -1113,6 +1137,17 @@ def _start_camera_ui(
             control_state['running'] = False
             countdown_state['remaining'] = 0
             return jsonify({'success': True, 'message': 'Countdown reset'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    @app.route('/control/speak-intervals', methods=['POST'])
+    def set_speak_intervals():
+        """Toggle speaking at 10-second intervals."""
+        try:
+            data = request.get_json() or {}
+            enabled = data.get('enabled', False)
+            control_state['speak_intervals'] = enabled
+            return jsonify({'success': True, 'enabled': enabled})
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
     
@@ -1214,7 +1249,13 @@ def main() -> None:
 
     stop_event = threading.Event()
     countdown_state = {'remaining': 0, 'target': ''}
-    control_state = {'action': None, 'running': False, 'seconds': 30, 'youtube_url': None}
+    control_state = {
+        'action': None,
+        'running': False,
+        'seconds': 30,
+        'youtube_url': None,
+        'speak_intervals': args.speak_intervals,
+    }
     
     # Determine the URL for the web UI
     if args.host == "0.0.0.0" or args.host == "127.0.0.1":
