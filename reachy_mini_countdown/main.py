@@ -218,34 +218,24 @@ class ReachyMiniCountdown(ReachyMiniApp):
         print(f"⏱️ {seconds_remaining}s...")
 
     def _final_ten(self, reachy: ReachyMini, seconds_remaining: int):
-        """Countdown with antenna flip for each second."""
-        # Print and speak countdown number
+        """Countdown with tick-tock antenna for each second."""
         if seconds_remaining > 0:
             print(f"🔥 {seconds_remaining}...")
-            # Speak in background thread so we don't block
+            
+            # Tick-tock: alternate antenna position each second
+            if seconds_remaining % 2 == 0:
+                reachy.set_target(antennas=[0.5, -0.5])  # Tick
+            else:
+                reachy.set_target(antennas=[-0.5, 0.5])  # Tock
+            
+            # Speak in background thread
             threading.Thread(
                 target=self._speak_countdown,
                 args=(seconds_remaining, reachy),
                 daemon=True
             ).start()
-            # Antenna flip in background (non-blocking)
-            threading.Thread(
-                target=self._antenna_flip,
-                args=(reachy, seconds_remaining),
-                daemon=True
-            ).start()
         else:
             print("🎉 ZERO! 🎉")
-    
-    def _antenna_flip(self, reachy: ReachyMini, seconds_remaining: int):
-        """Quick antenna flip - runs in background."""
-        try:
-            if seconds_remaining % 2 == 0:
-                reachy.goto_target(antennas=[0.7, -0.7], duration=0.2)
-            else:
-                reachy.goto_target(antennas=[-0.7, 0.7], duration=0.2)
-        except Exception:
-            pass  # Ignore errors in background thread
 
     def _pre_generate_countdown_audio(self):
         """Pre-generate audio files for countdown numbers 1-60 at startup."""
