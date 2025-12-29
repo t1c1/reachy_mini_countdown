@@ -45,6 +45,9 @@ class ReachyMiniCountdown(ReachyMiniApp):
         # Track any local audio processes to stop them cleanly
         self._audio_procs: list[subprocess.Popen] = []
         self._audio_stop_event: threading.Event | None = None
+        # Pre-generated countdown audio files
+        self._countdown_audio_files: dict[int, str] = {}
+        self._pre_generate_countdown_audio()
 
     def run(self, reachy_mini: ReachyMini, stop_event: threading.Event):
         """Main entry point - called by dashboard."""
@@ -234,57 +237,67 @@ class ReachyMiniCountdown(ReachyMiniApp):
         else:
             print("🎉 ZERO! 🎉")
 
-    def _speak_countdown(self, number: int, reachy: ReachyMini | None = None):
-        """Speak the countdown number - tries robot speaker first, falls back to system."""
+    def _pre_generate_countdown_audio(self):
+        """Pre-generate audio files for countdown numbers 1-60 at startup."""
         import tempfile
+        temp_dir = tempfile.gettempdir()
         
-        # Try to play on robot speaker
-        if reachy is not None:
+        print("🔊 Pre-generating countdown audio files...")
+        # Generate for 1-10 (final countdown) plus 10, 20, 30, 40, 50, 60 (intervals)
+        numbers_to_generate = list(range(1, 11)) + [20, 30, 40, 50, 60]
+        
+        for number in numbers_to_generate:
             try:
-                temp_dir = tempfile.gettempdir()
-                
                 if sys.platform == 'darwin':
-                    # Generate WAV file (16kHz, mono for robot compatibility)
                     aiff_file = os.path.join(temp_dir, f'countdown_{number}.aiff')
                     wav_file = os.path.join(temp_dir, f'countdown_{number}.wav')
                     
-                    # Generate AIFF with say
-                    result = subprocess.run(
+                    # Generate AIFF with say (16kHz for robot)
+                    subprocess.run(
                         ['say', '-o', aiff_file, '--data-format=LEI16@16000', str(number)],
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
-                        timeout=3
+                        timeout=5
                     )
                     
-                    if result.returncode == 0 and os.path.exists(aiff_file):
-                        # Convert to WAV using afconvert
+                    if os.path.exists(aiff_file):
+                        # Convert to WAV
                         subprocess.run(
                             ['afconvert', '-f', 'WAVE', '-d', 'LEI16@16000', aiff_file, wav_file],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL,
-                            timeout=3
+                            timeout=5
                         )
-                        
                         if os.path.exists(wav_file):
-                            reachy.media.audio.play_sound(wav_file)
-                            print(f"🔊 Robot says: {number}")
-                            return
-                
+                            self._countdown_audio_files[number] = wav_file
+                            
                 elif sys.platform.startswith('linux'):
                     wav_file = os.path.join(temp_dir, f'countdown_{number}.wav')
-                    result = subprocess.run(
+                    subprocess.run(
                         ['espeak', '-w', wav_file, str(number)],
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
-                        timeout=3
+                        timeout=5
                     )
-                    if result.returncode == 0 and os.path.exists(wav_file):
-                        reachy.media.audio.play_sound(wav_file)
-                        print(f"🔊 Robot says: {number}")
-                        return
+                    if os.path.exists(wav_file):
+                        self._countdown_audio_files[number] = wav_file
                         
             except Exception as e:
-                print(f"⚠️  Robot audio failed ({e}), using computer speaker")
+                print(f"⚠️  Failed to generate audio for {number}: {e}")
+        
+        print(f"✅ Generated {len(self._countdown_audio_files)} countdown audio files")
+    
+    def _speak_countdown(self, number: int, reachy: ReachyMini | None = None):
+        """Speak the countdown number - uses pre-generated audio for speed."""
+        # Use pre-generated audio file if available
+        if number in self._countdown_audio_files and reachy is not None:
+            try:
+                audio_file = self._countdown_audio_files[number]
+                reachy.media.audio.play_sound(audio_file)
+                print(f"🔊 {number}")
+                return
+            except Exception as e:
+                print(f"⚠️  Robot audio failed ({e})")
         
         # Fallback to computer speaker
         self._speak_countdown_local(number)
