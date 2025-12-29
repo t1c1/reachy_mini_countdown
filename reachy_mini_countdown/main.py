@@ -725,7 +725,7 @@ def _start_camera_ui(
                 vertical-align: middle;
             }
             .countdown-display {
-                font-size: 3em;
+                font-size: 6em;
                 font-weight: 700;
                 color: #1f2a3d;
                 margin: 12px 0 4px;
@@ -889,7 +889,6 @@ def _start_camera_ui(
             <h3>📋 Status</h3>
             <p><strong>Camera:</strong> <span id="camera-status">__CAM_STATUS__</span></p>
             <p><strong>Robot:</strong> <span id="robot-status">Connected</span></p>
-            <p><strong>Head Position:</strong> <span id="head-status">High (35-45°)</span></p>
             
             <h3>🎮 Controls</h3>
             <div class="button-group">
