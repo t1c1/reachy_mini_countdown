@@ -13,74 +13,68 @@ tags:
 
 # 🎉 Reachy Mini Countdown
 
-A fun countdown app for New Year's Eve or any celebration! Watch Reachy Mini count down, dance, and celebrate when the timer hits zero.
+A countdown app for Reachy Mini. Set a timer, watch the robot get increasingly excited, then celebrate when it hits zero.
 
-**[Install from Hugging Face](https://huggingface.co/spaces/t1c1/reachy_mini_countdown)** | **[View on GitHub](https://github.com/t1c1/reachy_mini_countdown)**
+**[Install from Hugging Face](https://huggingface.co/spaces/t1c1/reachy_mini_countdown)**
 
-## Features
+## What It Does
 
-- ⏱️ **Countdown Timer**: Set any duration (5 to 3600 seconds)
-- 💃 **Celebration Dance**: Intense head bobs and antenna flips at zero
-- 🎵 **Custom Music**: Set any YouTube URL for the celebration
-- 🗣️ **Voice Countdown**: Speaks the final 10 seconds (macOS)
-- 🌐 **Web UI**: Control everything from your browser
+- **Countdown Timer**: 5 to 3600 seconds
+- **Celebration Dance**: Head bobs and antenna flips at zero
+- **Voice Countdown**: Robot speaks "10, 9, 8..." through its speaker
+- **Custom Music**: Set any YouTube URL for the celebration
+- **Web UI**: Control everything from your browser
 
-## Quick Install
+## Install
 
-**From the Reachy Mini Dashboard:**
-1. Go to http://localhost:8000
-2. Find "Reachy Mini Countdown" in the app list
-3. Click Install
-4. Toggle it ON
-5. Click ⚙️ to open controls
+From the Reachy Mini Dashboard (http://localhost:8000):
+1. Find "reachy-mini-countdown" in the app list
+2. Click Install
+3. Toggle it ON
+4. Click ⚙️ to open controls at http://localhost:5001
 
-**Or install manually:**
+Or install manually:
 ```bash
 pip install git+https://huggingface.co/spaces/t1c1/reachy_mini_countdown
 ```
 
 ## How It Works
 
-1. **Waiting**: Gentle antenna metronome sway
-2. **Final Minute**: Antennas rise, head tilts up, alternating antenna flips
-3. **Final 10 Seconds**: Big antenna flips, head bobs, spoken countdown
-4. **Celebration**: Full dance routine with your chosen music!
+| Phase | What Happens |
+|-------|--------------|
+| Waiting | Gentle antenna sway |
+| Final 60s | Antennas rise, head tilts up |
+| Final 10s | Big antenna flips, head bobs, voice countdown |
+| Zero | Celebration dance with music! |
 
-## Web UI Controls
+## Controls
 
-Open http://localhost:5001 when the app is running:
+When running, open http://localhost:5001:
 
-- **▶️ Start**: Begin countdown with default 30 seconds
-- **⏹️ Stop**: Pause the countdown
-- **🔄 Reset**: Clear and return to ready state
-- **Custom Duration**: Enter seconds and click Start Custom
-- **🎵 Save Music**: Set a YouTube URL for celebration
+- **▶️ Start**: 30 second countdown
+- **⏹️ Stop**: Pause
+- **🔄 Reset**: Clear and return to ready
+- **Custom Duration**: Enter seconds, click Start Custom
+- **Speak Intervals**: Checkbox to announce 60, 50, 40... 
+- **🎵 Save Music**: Set YouTube URL for celebration
 
-## Development Setup
-
-If you want to modify the app locally:
+## Development
 
 ```bash
-# Clone the repo
 git clone https://github.com/t1c1/reachy_mini_countdown
 cd reachy_mini_countdown
 
-# Install uv (recommended)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Create virtual environment
-uv venv .venv --python 3.12
-source .venv/bin/activate
-
-# Install dependencies
+# Setup
+uv venv reachy_mini_env --python 3.12
+source reachy_mini_env/bin/activate
 uv sync
 
-# Run the daemon (for USB Reachy Mini or simulation)
-uv run reachy-mini-daemon        # USB
+# Run daemon
+uv run reachy-mini-daemon        # USB robot
 uv run reachy-mini-daemon --sim  # Simulation
 
-# Install the app in dev mode
-pip install -e /path/to/my_reachy_apps/reachy_mini_countdown
+# Install in dev mode
+pip install -e .
 ```
 
 ## Project Structure
@@ -89,20 +83,15 @@ pip install -e /path/to/my_reachy_apps/reachy_mini_countdown
 reachy_mini_countdown/
 ├── reachy_mini_countdown/
 │   ├── __init__.py
-│   └── main.py              # App logic + embedded web UI
+│   └── main.py              # App logic + web UI
 ├── index.html               # HF Space landing page
-├── style.css                # HF Space styles
-├── README.md
-└── pyproject.toml
+├── style.css
+├── pyproject.toml
+└── README.md
 ```
 
 ## Links
 
-- **Hugging Face Space**: https://huggingface.co/spaces/t1c1/reachy_mini_countdown
-- **GitHub**: https://github.com/t1c1/reachy_mini_countdown
-- **Reachy Mini SDK**: https://github.com/pollen-robotics/reachy_mini
-
-## Author
-
-Created by [t1c1](https://huggingface.co/t1c1)
-
+- [Hugging Face Space](https://huggingface.co/spaces/t1c1/reachy_mini_countdown)
+- [GitHub](https://github.com/t1c1/reachy_mini_countdown)
+- [Reachy Mini SDK](https://github.com/pollen-robotics/reachy_mini)
