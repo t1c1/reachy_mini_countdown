@@ -70,6 +70,7 @@ class ReachyMiniCountdown(ReachyMiniApp):
         time.sleep(0.5)
         
         # Wait for start command if control_state exists
+        self._last_spoken = -1  # Track which countdown numbers have been spoken
         if control_state is not None:
             while not stop_event.is_set():
                 action = control_state.get('action')
@@ -78,6 +79,7 @@ class ReachyMiniCountdown(ReachyMiniApp):
                     target = datetime.now() + timedelta(seconds=seconds)
                     control_state['action'] = None  # Clear action
                     control_state['running'] = True
+                    self._last_spoken = -1
                     print(f"🎊 Starting {seconds} second countdown!")
                     break
                 elif action == 'reset':
@@ -107,6 +109,7 @@ class ReachyMiniCountdown(ReachyMiniApp):
                             target = datetime.now() + timedelta(seconds=seconds)
                             control_state['action'] = None
                             control_state['running'] = True
+                            self._last_spoken = -1
                             print(f"🎊 Starting {seconds} second countdown!")
                             break
                         elif action == 'reset':
@@ -146,6 +149,7 @@ class ReachyMiniCountdown(ReachyMiniApp):
                             target = datetime.now() + timedelta(seconds=seconds)
                             control_state['action'] = None
                             control_state['running'] = True
+                            self._last_spoken = -1
                             print(f"🎊 Starting {seconds} second countdown!")
                             break
                         time.sleep(0.5)
@@ -154,12 +158,11 @@ class ReachyMiniCountdown(ReachyMiniApp):
             elif remaining <= 10:
                 # Countdown from 10 to 1
                 countdown_number = int(remaining)
-                if countdown_number > 0:
+                if countdown_number > 0 and countdown_number != getattr(self, '_last_spoken', -1):
+                    self._last_spoken = countdown_number
                     self._final_ten(reachy_mini, countdown_number)
-                    # Wait until next second
-                    time.sleep(1.0)
-                else:
-                    time.sleep(0.1)
+                # Sleep shorter to catch each second
+                time.sleep(0.1)
             elif remaining <= 60:
                 self._final_minute(reachy_mini, int(remaining))
                 time.sleep(1)
@@ -215,25 +218,26 @@ class ReachyMiniCountdown(ReachyMiniApp):
         print(f"⏱️ {seconds_remaining}s...")
 
     def _final_ten(self, reachy: ReachyMini, seconds_remaining: int):
-        """Countdown with head bobs for final 10 seconds."""
-        # Antennas fully up
-        reachy.goto_target(antennas=[0.75, 0.75], duration=0.18)
+        """Countdown with antenna flip for each second."""
+        # Alternate antenna direction each second
+        if seconds_remaining % 2 == 0:
+            reachy.goto_target(antennas=[0.8, -0.8], duration=0.15)
+        else:
+            reachy.goto_target(antennas=[-0.8, 0.8], duration=0.15)
         
-        # Head bob (keep head up, no downward movement)
-        head_mid = create_head_pose(pitch=-38, degrees=True)
-        head_up = create_head_pose(pitch=-50, degrees=True)
-        reachy.goto_target(head=head_mid, duration=0.18)
-        reachy.goto_target(head=head_up, duration=0.18)
+        # Quick head nod
+        head = create_head_pose(pitch=-45, degrees=True)
+        reachy.goto_target(head=head, duration=0.15)
         
-        # Antenna flip burst
-        reachy.goto_target(antennas=[0.9, -0.9], duration=0.18)
-        reachy.goto_target(antennas=[-0.9, 0.9], duration=0.18)
-        reachy.goto_target(antennas=[0.75, 0.75], duration=0.18)
-        
-        # Print and speak countdown number (10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+        # Print and speak countdown number
         if seconds_remaining > 0:
             print(f"🔥 {seconds_remaining}...")
-            self._speak_countdown(seconds_remaining, reachy)
+            # Speak in background thread so we don't block
+            threading.Thread(
+                target=self._speak_countdown,
+                args=(seconds_remaining, reachy),
+                daemon=True
+            ).start()
         else:
             print("🎉 ZERO! 🎉")
 
