@@ -105,6 +105,3 @@ reachy_mini_countdown/
 
 Created by [t1c1](https://huggingface.co/t1c1)
 
-## License
-
-MIT
