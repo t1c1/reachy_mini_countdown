@@ -235,56 +235,9 @@ class ReachyMiniCountdown(ReachyMiniApp):
             print("🎉 ZERO! 🎉")
 
     def _speak_countdown(self, number: int, reachy: ReachyMini | None = None):
-        """Speak the countdown number - tries robot speaker first, falls back to system."""
-        import tempfile
-        
-        try:
-            # Try to generate audio file and play on robot
-            if reachy is not None and hasattr(reachy, 'media') and hasattr(reachy.media, 'audio'):
-                temp_dir = tempfile.gettempdir()
-                audio_file = os.path.join(temp_dir, f'countdown_{number}.aiff')
-                
-                # Generate TTS audio file
-                generated = False
-                if sys.platform == 'darwin':
-                    # macOS - use 'say' with output file
-                    result = subprocess.run(
-                        ['say', '-o', audio_file, str(number)],
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                        timeout=5
-                    )
-                    generated = result.returncode == 0 and os.path.exists(audio_file)
-                elif sys.platform.startswith('linux'):
-                    # Linux - try espeak with WAV output
-                    wav_file = os.path.join(temp_dir, f'countdown_{number}.wav')
-                    try:
-                        result = subprocess.run(
-                            ['espeak', '-w', wav_file, str(number)],
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL,
-                            timeout=5
-                        )
-                        if result.returncode == 0 and os.path.exists(wav_file):
-                            audio_file = wav_file
-                            generated = True
-                    except FileNotFoundError:
-                        pass
-                
-                # Play on robot speaker
-                if generated and os.path.exists(audio_file):
-                    try:
-                        reachy.media.audio.play_sound(audio_file)
-                        return  # Success - don't fall back
-                    except Exception as e:
-                        print(f"⚠️  Robot speaker failed: {e}")
-            
-            # Fallback to system speaker
-            self._speak_countdown_local(number)
-            
-        except Exception:
-            # Last resort fallback
-            self._speak_countdown_local(number)
+        """Speak the countdown number using system TTS."""
+        # Use local TTS - it's fast and reliable for quick countdown numbers
+        self._speak_countdown_local(number)
     
     def _speak_countdown_local(self, number: int):
         """Fallback: speak using local system TTS."""
