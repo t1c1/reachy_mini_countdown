@@ -2,7 +2,7 @@
 title: Reachy Mini Countdown
 emoji: 🎉
 colorFrom: yellow
-colorTo: orange
+colorTo: red
 sdk: static
 pinned: false
 tags:
