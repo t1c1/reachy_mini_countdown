@@ -71,11 +71,16 @@ class ReachyMiniCountdown(ReachyMiniApp):
         
         # Wait for start command if control_state exists
         self._last_spoken = -1  # Track which countdown numbers have been spoken
+        self._total_countdown = 30  # Total countdown duration for antenna sweep
         if control_state is not None:
+            # Default speak_intervals to True if not set
+            if 'speak_intervals' not in control_state:
+                control_state['speak_intervals'] = True
             while not stop_event.is_set():
                 action = control_state.get('action')
                 if action == 'start':
                     seconds = control_state.get('seconds', 30)
+                    self._total_countdown = seconds  # Store for antenna sweep
                     target = datetime.now() + timedelta(seconds=seconds)
                     control_state['action'] = None  # Clear action
                     control_state['running'] = True
@@ -91,6 +96,7 @@ class ReachyMiniCountdown(ReachyMiniApp):
         else:
             # Default behavior - use target override or midnight
             target = self._target_override or self._get_next_midnight()
+            self._total_countdown = (target - datetime.now()).total_seconds()
             print(f"🎊 Countdown to: {target}")
 
         while not stop_event.is_set():
@@ -106,6 +112,7 @@ class ReachyMiniCountdown(ReachyMiniApp):
                         action = control_state.get('action')
                         if action == 'start':
                             seconds = control_state.get('seconds', 30)
+                            self._total_countdown = seconds
                             target = datetime.now() + timedelta(seconds=seconds)
                             control_state['action'] = None
                             control_state['running'] = True
@@ -146,6 +153,7 @@ class ReachyMiniCountdown(ReachyMiniApp):
                         action = control_state.get('action')
                         if action == 'start':
                             seconds = control_state.get('seconds', 30)
+                            self._total_countdown = seconds
                             target = datetime.now() + timedelta(seconds=seconds)
                             control_state['action'] = None
                             control_state['running'] = True
@@ -194,14 +202,17 @@ class ReachyMiniCountdown(ReachyMiniApp):
         reachy.goto_target(antennas=[0.2, -0.2], duration=0.5)
 
     def _final_minute(self, reachy: ReachyMini, seconds_remaining: int):
-        """Antennas rise during final 60 seconds."""
-        progress = 1 - (seconds_remaining / 60)  # 0.0 → 1.0
-        antenna_pos = -0.6 + (progress * 1.2)    # -0.6 to 0.6 radians (more lift)
+        """Antennas sweep based on total countdown progress."""
+        total = getattr(self, '_total_countdown', 60)
+        # Progress through entire countdown (0.0 at start → 1.0 at end)
+        progress = 1 - (seconds_remaining / total)
         
+        # Antennas sweep from -0.8 to 0.8 radians (full range)
+        antenna_pos = -0.8 + (progress * 1.6)
         reachy.goto_target(antennas=[antenna_pos, antenna_pos], duration=0.4)
         
-        # Head tilts up, starting from -30 degrees
-        pitch = -30 - (progress * 20)  # -30 to -50 degrees (more tilt)
+        # Head tilts up gradually
+        pitch = -30 - (progress * 20)  # -30 to -50 degrees
         head = create_head_pose(pitch=pitch, degrees=True)
         reachy.goto_target(head=head, duration=0.4)
         
@@ -210,25 +221,30 @@ class ReachyMiniCountdown(ReachyMiniApp):
             reachy.goto_target(antennas=[0.8, -0.8], duration=0.25)
             reachy.goto_target(antennas=[-0.8, 0.8], duration=0.25)
             reachy.goto_target(antennas=[antenna_pos, antenna_pos], duration=0.25)
-            # Speak interval if enabled
+            # Speak interval (enabled by default now)
             control_state = getattr(self, '_control_state', None)
-            if control_state and control_state.get('speak_intervals', False):
+            if control_state and control_state.get('speak_intervals', True):
                 self._speak_countdown(seconds_remaining, reachy)
         
         print(f"⏱️ {seconds_remaining}s...")
 
     def _final_ten(self, reachy: ReachyMini, seconds_remaining: int):
-        """Countdown with tick-tock antenna for each second."""
+        """Countdown with tick-tock antenna for each second. Always speaks."""
         if seconds_remaining > 0:
             print(f"🔥 {seconds_remaining}...")
             
             # Tick-tock: alternate antenna position each second
-            if seconds_remaining % 2 == 0:
-                reachy.set_target(antennas=[0.5, -0.5])  # Tick
-            else:
-                reachy.set_target(antennas=[-0.5, 0.5])  # Tock
+            # Also continue the sweep progress
+            total = getattr(self, '_total_countdown', 60)
+            progress = 1 - (seconds_remaining / total)
+            base_pos = -0.8 + (progress * 1.6)
             
-            # Speak in background thread
+            if seconds_remaining % 2 == 0:
+                reachy.set_target(antennas=[base_pos + 0.3, base_pos - 0.3])  # Tick
+            else:
+                reachy.set_target(antennas=[base_pos - 0.3, base_pos + 0.3])  # Tock
+            
+            # Always speak in final 10 (in background thread for speed)
             threading.Thread(
                 target=self._speak_countdown,
                 args=(seconds_remaining, reachy),
@@ -651,6 +667,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--speak-intervals",
         action="store_true",
+        default=True,
         help="Speak at every 10 second interval (60, 50, 40, 30, 20, 10)",
     )
     return parser.parse_args()
@@ -1110,7 +1127,7 @@ def _start_camera_ui(
     
     # Inject emoji, music URL, and camera blocks into template
     yt_value = control_state.get('youtube_url') or youtube_url or ""
-    speak_checked = "checked" if control_state.get('speak_intervals', False) else ""
+    speak_checked = "checked" if control_state.get('speak_intervals', True) else ""
     templ = (
         HTML_TEMPLATE
         .replace("__EMOJI__", emoji)

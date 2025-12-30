@@ -100,3 +100,4 @@ All threads share `stop_event` to coordinate shutdown.
 - Change celebration duration: `--celebration-seconds 30`
 - Set custom target time: `--target "2025-12-31T23:59:50"`
 - Test mode: `--test-seconds 15 --once`
+now
