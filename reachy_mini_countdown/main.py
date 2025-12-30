@@ -25,7 +25,11 @@ from reachy_mini.utils import create_head_pose
 class ReachyMiniCountdown(ReachyMiniApp):
     """Countdown app with celebration dance at zero."""
 
+    # App metadata for dashboard display
     custom_app_url: str | None = None  # Set dynamically based on port
+    description: str = "Countdown timer with celebration dance!"
+    emoji: str = "🎉"
+    
     CELEBRATION_DURATION = 60
     # Classic "Auld Lang Syne" - traditional New Year's song
     AULD_LANG_SYNE_URL = "https://www.youtube.com/watch?v=Al7ONqrdscY&t=3s"
